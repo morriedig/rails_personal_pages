@@ -1,213 +1,225 @@
-<body>
-<canvas id="canvas">
-  <%# <img src="orangutan.png" alt="" id="logo"/> %>
-</canvas>
+<div class="first-block">
+  <canvas id="canvas">
+  </canvas>
+</div>
+<div class="third-block">
+  <div class="envelope">
+    <div class="left-message">
+      <p class="name">
+        Morrie Huang
+      </p>
+      <p>
+        XXXXXXXX <br>
+        XXXXXXXX <br>
+        XXXXXXXX
+      </p>
+      <p>
+        Huangyudi80@gmail.com
+      </p>
+    </div>
+    <div class="right-message">
+      <%= image_tag("logo.png") %>
+    </div>
+  </div>
+</div>
+<footer>
+  <div class="mail">
+    <p>huangyudi80@gmail.com</p>
+  </div>
+</footer>
+<style>
+  p{
+    margin: 0;
+    padding: 0;
+  }
+  body{
+    background-color: #e5e5e5;
+    margin: 0;
+    padding: 0;
+  }
+  .first-block{
+    background-image: url("<%= asset_path("background.jpg") %>");
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    border: 0;
+  }
+  #canvas{
+    margin: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    /* border: 1px solid #fff; */
+    width: 100%;
+    height: 100%;
+  }
+  .third-block{
+    width: 100%;
+    /* height: 90vh; */
+  }
+  .third-block .envelope{
+    background-image: url("<%=  asset_path("envelope.jpg")%>");
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 780px;
+    height: 430px;
+    margin: 80px auto 130px;
+    position: relative;
+  }
+  .third-block .envelope .left-message{
+    position: absolute;
+    top: 220px;
+    left: 80px;
+  }
+
+  .third-block .envelope .left-message .name{
+    font-size: 22px;
+  }
+
+  .third-block .envelope .right-message{
+    position: absolute;
+    right: 50px;
+    top: 50px;
+  }
+
+  .third-block .envelope .right-message img{
+    width: 80px;
+    height: 80px;
+  }
+
+  footer{
+    color: #e1e1e1;
+    width: 100%;
+    background-color: black;
+  }
+  footer p {
+    margin: 0;
+    padding: 10px 0 18px;
+    text-align: center;
+  }
+</style>
 
 <script>
-$(document).ready(function(){
-  var canvas = document.getElementById("canvas");
-  var ctx = canvas.getContext('2d');
-  var img;
+  $(document).ready(function(){
+    window.onload = function(){
+      canvas = document.getElementById("canvas");
+      context = canvas.getContext("2d");
+      focallength = 800;
 
-  // 設定 canvas 的寬高等於整個頁面的寬高
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+      var dots = getimgData("Morrie");
+      var pause = false;
+      initAnimate();
 
-  var RAF = (function() {
-    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
-          window.setTimeout(callback, 1000 / 60);
-        };
-  })();
-  Array.prototype.forEach = function(callback) {
-    for (var i = 0; i < this.length; i++) {
-      callback.call((typeof this[i] === "object") ? this[i] : window, i, this[i]);
-    }
-  };
+      function initAnimate(){
+        dots.forEach(function(){
+          // 設定隨機的 x, y, z 跟 tx, ty, tz
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.z = Math.random() * focallength * 2 - focallength;
+          this.tx = Math.random() * canvas.width;
+          this.ty = Math.random() * canvas.height;
+          this.tz = Math.random() * focallength * 2 - focallength;
+          // x,y,y 隨機設定好以後，設定路線
+          this.paint();
+        });
+        // 寫出文字
+        animate();
+      }
 
-  var particleArray = [];
-  var animateArray = [];
-  var particleSize_x = 1;
-  var particleSize_y = 2;
+      function animate(){
+        var thisTime = +new Date();
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        dots.forEach(function(){
+          var dot = this;
+          if(Math.abs(dot.dx - dot.x) < 0.1 && Math.abs(dot.dy - dot.y) < 0.1 && Math.abs(dot.dz - dot.z) < 0.1 ){
+            dot.x = dot.dx;
+            dot.y = dot.dy;
+            dot.z = dot.dz;
+          }else{
+            // 這邊是設定要回到原本文字的軌跡( 回去的直線距離 )
+            // 每次移動的距離
+            dot.x = dot.x + ( dot.dx - dot.x ) * 0.1;
+            dot.y = dot.y + ( dot.dy - dot.y ) * 0.1;
+            dot.z = dot.z + ( dot.dz - dot.z ) * 0.1;
+            lastTime = +new Date();
+          }
+          dot.paint();
+        });
 
-
-  var canvasHandle = {
-    init: function() {
-      this._reset();
-      this._initImageData();
-      this._execAnimate();
-    },
-
-    _reset: function() {
-      particleArray.length = 0;
-      animateArray.length = 0;
-      this.ite = 100;
-      this.start = 0;
-      this.end = this.start + this.ite;
-    },
-    
-    _initImageData: function(){
-      this.imgx = ( canvas.width - img.width ) / 2;
-      this.imgy = ( canvas.height - img.height ) / 2;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage( img, this.imgx, this.imgy, img.width, img.height );
-
-      var imgData = ctx.getImageData( this.imgx, this.imgy, img.width, img.height );
-      for( var x = 0; x < img.width; x += particleSize_x ){
-        for( var y = 0; y < img.height; y += particleSize_y ){
-          var i = ( y * imgData.width + x ) * 4;
-
-          if( imgData.data[i + 3] >= 125 ){
-            var color = `rgba(${ imgData.data[i] + 130  }, ${ imgData.data[i+1 + 110] },${ imgData.data[i+2] + 125 },${ imgData.data[i+3] })`;
-            var x_random = x + Math.random() * 500,
-                vx = -Math.random() * 200 + 100,
-                y_random = img.height / 2 - Math.random() * 40 + 40,
-                vy;      
-            if( y_random < this.imgy + img.height / 2 ){
-              vy = Math.random() * 600;
-            }else{
-              vy = -Math.random() * 600;
-            }
-            particleArray.push(
-              new Particle(
-                x_random + this.imgx,
-                y_random + this.imgy,
-                x + this.imgx,
-                y + this.imgy,
-                vx,
-                vy,
-                color  
-              )
-            );
-            particleArray[particleArray.length - 1].drawSelf();
+        if (!pause) {
+          if ("requestAnimationFrame" in window) {
+            requestAnimationFrame(animate);
+          }
+          else if ("webkitRequestAnimationFrame" in window) {
+            webkitRequestAnimationFrame(animate);
+          }
+          else if ("msRequestAnimationFrame" in window) {
+            msRequestAnimationFrame(animate);
+          }
+          else if ("mozRequestAnimationFrame" in window) {
+            mozRequestAnimationFrame(animate);
           }
         }
       }
+    }
 
-    },
+    Array.prototype.forEach = function(callback){
+      for(var i = 0; i < this.length; i++){
+        callback.call(this[i]);
+      }
+    }
+    // 設定物件屬性
+    var Dot = function(centerX, centerY, centerZ, radius) {
+      // x, y, z & dz, dy, dz 等於 font 原本的位置
+      this.dx = centerX;
+      this.dy = centerY;
+      this.dz = centerZ;
+      this.tx = 0;
+      this.ty = 0;
+      this.tz = 0;
+      this.z = centerZ;
+      this.x = centerX;
+      this.y = centerY;
+      this.radius = radius;
+    }
 
-    _execAnimate: function(){
-      var that = this;
-      particleArray.sort( function( a, b ){
-        return a.ex - b.ex;
-      });
-
-      if( !this.isInit ){
-        this.isInit = true;
-        animate( function( tickTime ){
-          if( animateArray.length < particleArray.length ){
-            if( that.end > ( particleArray.length - 1 ) ){
-              that.end = ( particleArray.length - 1 )
-            }
-            animateArray = animateArray.concat( particleArray.slice(that.start, that.end) );
-            that.start += that.ite;
-            that.end += that.ite;
-          }
-          animateArray.forEach(function( i ){
-            // 為什麼 this 有 update 屬性？
-            this.update(tickTime);
-          })
-        })
+    Dot.prototype = {
+      paint: function(){
+        context.save();
+        context.beginPath();
+        var scale = focallength / ( focallength + this.z );
+        context.arc( canvas.width / 2 + ( this.x - canvas.width / 2 ) * scale, canvas.height / 2 + ( this.y - canvas.height / 2 ) * scale, this.radius * scale, 0, 2 * Math.PI );
+        context.fillStyle = `rgba(250, 50, 50,${scale})`;
+        context.fill();
+        context.restore();
       }
     }
 
+    function getimgData(text){
+      // 寫字
+      context.save();
+      context.font = "80px 微軟黑體 bold";
+      context.fillStyle = "rgba( 168, 168, 168, 1 )";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text, canvas.width / 2, canvas.height / 2 );
+      context.restore();
 
-  }
-
-  var tickTime = 16; // 這什麼？
-  function animate( tick ){
-    if( typeof tick == "function" ){
-      var tickTime = 16;
-      ctx.clearRect( 0, 0, canvas.width, canvas.height );
-      tick(tickTime);
-      RAF(function() {
-        animate(tick);
-      })
-    }
-  }
-
-  function Particle( x, y, ex, ey, vx, vy, color ){
-    this.x = x;
-    this.y = y;
-    this.ex = ex;
-    this.ey = ey;
-    this.vx = vx;
-    this.vy = vy;
-    this.a = 1500;
-    this.color = color;
-    this.width = particleSize_x;
-    this.height = particleSize_y;
-    this.stop = false;
-    this.static = false;
-    this.maxCheckTimes = 10;
-    this.checkLength = 5;
-    this.checkTimes = 0;
-  }
-
-  
-  
-  // 開始宣告 粒子的屬性
-  var oldColor = "";
-  Particle.prototype = {
-    constructor: Particle,
-    drawSelf: function(){
-      if( oldColor != this.color ){
-        ctx.fillStyle = this.color;
-        oldColor = this.color;
-      }
-      ctx.fillRect( this.x - this.width / 2, this.y - this.height / 2, this.width, this.height );
-    },
-
-    move: function( tickTime ){
-      if( this.stop ){
-        // 如果停止，x,y 要等於最後的位置
-        this.x = this.ex;
-        this.y = this.ey;
-      }else{
-        // 否則繼續移動
-        tickTime = tickTime / 1000;
-        var cx = this.ex - this.x;
-        var cy = this.ey - this.y;
-        var angle = Math.atan( cy / cx );
-        var ax = Math.abs( this.a * Math.cos( angle ) );
-        ax = this.x > this.ex ? -ax : ax;
-        var ay = Math.abs( this.a * Math.sin( angle ) );
-        ay = this.y > this.ey ? -ay : ay;
-        this.vx += ax * tickTime;
-        this.vy += ay * tickTime;
-        this.vx *= 0.95;
-        this.vy *= 0.95;
-        this.x += this.vx * tickTime;
-        this.y += this.vy * tickTime;
-
-        if( Math.abs(this.x - this.ex) <= this.checkLength && Math.abs(this.y - this.ey) <= this.checkLength ){
-          this.checkTimes ++;
-          if( this.checkTimes >= this.maxCheckTimes ){
-            this.stop = true;
+      // 得到文字數據
+      var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      var dots = [];
+      for(var x = 0; x < imgData.width; x += 3){
+        for(var y = 0; y < imgData.height; y += 3){
+          var i = (y * imgData.width + x) * 4;
+          if(imgData.data[i] >= 128){
+            // 設定所有圓球的中心點
+            var dot = new Dot(x-1, y-2, 0, 1);
+            dots.push(dot);
           }
-        }else{
-          this.checkTimes = 0;
         }
       }
-    },
-    update: function(tickTime){
-      this.move(tickTime);
-      this.drawSelf();
+      return dots;
     }
-  }
-  function useText(text) {
-    img = document.createElement('canvas');
-    img.width = 600;
-    img.height = 180;
-    var imgctx = img.getContext("2d");
-    imgctx.textAlign = "center";
-    imgctx.textBaseline = "middle";
-    imgctx.font = "100px 微软雅黑";
-    imgctx.fillText(text || 'Morrie', img.width / 2, img.height / 2);
-    canvasHandle.init();
-  }
-  useText("Morrie")
-})
+  })
 </script>
-</body>
-</html>
