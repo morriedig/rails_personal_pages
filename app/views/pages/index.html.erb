@@ -219,16 +219,16 @@
         context.clearRect(0, 0, canvas.width, canvas.height);
         dots.forEach(function(){
           var dot = this;
-          if(Math.abs(dot.dx - dot.x) < 0.1 && Math.abs(dot.dy - dot.y) < 0.1 && Math.abs(dot.dz - dot.z) < 0.1 ){
+          if(Math.abs(dot.dx - dot.x) < 0.05 && Math.abs(dot.dy - dot.y) < 0.05 && Math.abs(dot.dz - dot.z) < 0.05 ){
             dot.x = dot.dx;
             dot.y = dot.dy;
             dot.z = dot.dz;
           }else{
             // 這邊是設定要回到原本文字的軌跡( 回去的直線距離 )
             // 每次移動的距離
-            dot.x = dot.x + ( dot.dx - dot.x ) * 0.1;
-            dot.y = dot.y + ( dot.dy - dot.y ) * 0.1;
-            dot.z = dot.z + ( dot.dz - dot.z ) * 0.1;
+            dot.x = dot.x + ( dot.dx - dot.x ) * 0.05;
+            dot.y = dot.y + ( dot.dy - dot.y ) * 0.05;
+            dot.z = dot.z + ( dot.dz - dot.z ) * 0.05;
             lastTime = +new Date();
           }
           dot.paint();
